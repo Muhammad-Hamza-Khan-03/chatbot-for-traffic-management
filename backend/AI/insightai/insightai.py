@@ -95,8 +95,6 @@ class InsightAI:
             "planner_user_df",
             "theorist_system",
             "dataframe_inspector_system",
-            "google_search_query_generator_system",
-            "google_search_react_system",
             "code_generator_system_df",
             "code_generator_system_gen",
             "code_generator_user_df",
@@ -107,13 +105,11 @@ class InsightAI:
             "solution_summarizer_system",
             "dataset_categorizer_system",
             "question_generator_system",
-            "report_generator_system",
             "code_generator_system_cleaning",
             "ml_model_suggester_system",
             "solution_summarizer_system_cleaning",
             "data_cleaning_planner_system",
             "data_quality_analyzer_system",
-            "diagram_generator_system",
         ]
 
         prompt_data = {}
@@ -387,16 +383,16 @@ class InsightAI:
         self.chain_id = chain_id
         self.reset_messages_and_logs()
         
-        if self.report_enabled:  # IMPORTANT: Use report_enabled, not generate_report
-                self.output_manager.display_system_messages("Report generation enabled - starting comprehensive analysis")
-                # Generate report with 5 auto-generated questions
-                self.generate_data_report(num_questions=self.report_question_count)
-                # If no specific question was asked, return after generating the report
-                if question is None:
-                    return
-        # Check if diagram generation is enabled
-        if self.diagram_enabled:
-            self.output_manager.display_system_messages("Diagram generation enabled - a Mermaid flowchart will be created")
+        # if self.report_enabled:  # IMPORTANT: Use report_enabled, not generate_report
+        #         self.output_manager.display_system_messages("Report generation enabled - starting comprehensive analysis")
+        #         # Generate report with 5 auto-generated questions
+        #         self.generate_data_report(num_questions=self.report_question_count)
+        #         # If no specific question was asked, return after generating the report
+        #         if question is None:
+        #             return
+        # # Check if diagram generation is enabled
+        # if self.diagram_enabled:
+        #     self.output_manager.display_system_messages("Diagram generation enabled - a Mermaid flowchart will be created")
         while True:
             if loop:
                 question = self.output_manager.display_user_input_prompt()
@@ -537,13 +533,7 @@ class InsightAI:
         summary = self.summarise_solution(original_question, plan, results)
 
         # Generate Mermaid diagram if enabled
-        if self.diagram_enabled:
-            file_type = '.csv'
-            mermaid_code = self.generate_mermaid_diagram(summary, original_question, file_type)
-            
-            # Display a message about the diagram
-            self.output_manager.display_system_messages("Mermaid diagram generated for the analysis flow")
-
+       
         # Reset the StringIO buffer
         output.truncate(0)
         output.seek(0)
@@ -794,13 +784,7 @@ class InsightAI:
             summary = "\n".join(results)
 
             # Generate Mermaid diagram if enabled
-            if self.diagram_enabled:
-                file_type = '.db'
-                mermaid_code = self.generate_mermaid_diagram(summary, question, file_type)
-                
-                # Display a message about the diagram
-                self.output_manager.display_system_messages("Mermaid diagram generated for the SQL analysis flow")
-                
+            
             return summary, query
 
         except Exception as e:
@@ -964,55 +948,56 @@ class InsightAI:
         import json
         
         agent = 'Report Generator'
-        using_model, provider = models.get_model_name(agent)
+        # using_model, provider = models.get_model_name(agent)
         
-        self.output_manager.display_tool_start(agent, using_model)
+        # self.output_manager.display_tool_start(agent, using_model)
         
-        if not self.report_answers:
-            self.process_report_questions()
+        # if not self.report_answers:
+        #     self.process_report_questions()
         
-        # Prepare input for the report generator
-        category_info = json.dumps(self.dataset_category, indent=2)
+        # # Prepare input for the report generator
+        # category_info = json.dumps(self.dataset_category, indent=2)
         
-        # Format answers for the report including visualization paths
-        answers_formatted = []
-        for item in self.report_answers:
-            answers_formatted.append({
-                "question": item["question"],
-                "answer": item["answer"],
-                # Only include code if debugging is enabled
-                "code": item["code"] if self.debug else None
-            })
+        # # Format answers for the report including visualization paths
+        # answers_formatted = []
+        # for item in self.report_answers:
+        #     answers_formatted.append({
+        #         "question": item["question"],
+        #         "answer": item["answer"],
+        #         # Only include code if debugging is enabled
+        #         "code": item["code"] if self.debug else None
+        #     })
         
-        answers_info = json.dumps(answers_formatted, indent=2)
+        # answers_info = json.dumps(answers_formatted, indent=2)
         
-        messages = [{"role": "system", "content": self.report_generator_system},
-                    {"role": "user", "content": f"Generate a professional report based on this dataset analysis:\n\nDataset Category:\n{category_info}\n\nQuestions and Answers:\n{answers_info}"}]
+        # messages = [{"role": "system", "content": self.report_generator_system},
+        #             {"role": "user", "content": f"Generate a professional report based on this dataset analysis:\n\nDataset Category:\n{category_info}\n\nQuestions and Answers:\n{answers_info}"}]
         
-        report_markdown = self.llm_call(self.log_and_call_manager, messages, agent=agent, chain_id=self.chain_id)
+        # report_markdown = self.llm_call(self.log_and_call_manager, messages, agent=agent, chain_id=self.chain_id)
         
-        # Save the report to a markdown file - with UTF-8 encoding
-        report_filename = f"data_analysis_report_{self.chain_id}.md"
-        with open(report_filename, 'w', encoding='utf-8') as f:
-            f.write(report_markdown)
+        # # Save the report to a markdown file - with UTF-8 encoding
+        # report_filename = f"data_analysis_report_{self.chain_id}.md"
+        # with open(report_filename, 'w', encoding='utf-8') as f:
+        #     f.write(report_markdown)
         
-        self.output_manager.display_system_messages(f"Report saved to {report_filename}")
+        # self.output_manager.display_system_messages(f"Report saved to {report_filename}")
         
-        # Try to convert to PDF if required libraries are available
-        try:
-            from weasyprint import HTML
-            import markdown
+        # # Try to convert to PDF if required libraries are available
+        # try:
+        #     from weasyprint import HTML
+        #     import markdown
             
-            html = markdown.markdown(report_markdown, extensions=['tables', 'fenced_code'])
-            pdf_filename = f"data_analysis_report_{self.chain_id}.pdf"
-            HTML(string=html).write_pdf(pdf_filename)
-            self.output_manager.display_system_messages(f"PDF report saved to {pdf_filename}")
-        except ImportError:
-            self.output_manager.display_system_messages("PDF conversion requires markdown and weasyprint libraries. Install them with: pip install markdown weasyprint")
-        except Exception as e:
-            self.output_manager.display_system_messages(f"Error converting to PDF: {str(e)}")
+        #     html = markdown.markdown(report_markdown, extensions=['tables', 'fenced_code'])
+        #     pdf_filename = f"data_analysis_report_{self.chain_id}.pdf"
+        #     HTML(string=html).write_pdf(pdf_filename)
+        #     self.output_manager.display_system_messages(f"PDF report saved to {pdf_filename}")
+        # except ImportError:
+        #     self.output_manager.display_system_messages("PDF conversion requires markdown and weasyprint libraries. Install them with: pip install markdown weasyprint")
+        # except Exception as e:
+        #     self.output_manager.display_system_messages(f"Error converting to PDF: {str(e)}")
         
-        return report_markdown
+        # return report_markdown
+        pass
 
     def generate_data_report(self, num_questions=5):
         """Generate a comprehensive data analysis report with the specified number of questions."""
@@ -1238,34 +1223,35 @@ class InsightAI:
             str: Mermaid diagram code
         """
         agent = 'Diagram Generator'
-        using_model, provider = models.get_model_name('Solution Summarizer')  # Reuse Solution Summarizer's model
+        # using_model, provider = models.get_model_name('Solution Summarizer')  # Reuse Solution Summarizer's model
         
-        self.output_manager.display_tool_start(agent, using_model)
+        # self.output_manager.display_tool_start(agent, using_model)
         
-        # Call the LLM to generate the diagram
-        messages = [{"role": "system", "content": self.diagram_generator_system},
-                    {"role": "user", "content": f"Original Question: {question}\n\nAnalysis Summary: {summary}\n\nFile Type: {file_type}"}]
+        # # Call the LLM to generate the diagram
+        # messages = [{"role": "system", "content": self.diagram_generator_system},
+        #             {"role": "user", "content": f"Original Question: {question}\n\nAnalysis Summary: {summary}\n\nFile Type: {file_type}"}]
         
-        mermaid_code = self.llm_call(self.log_and_call_manager, messages, agent=agent, chain_id=self.chain_id)
+        # mermaid_code = self.llm_call(self.log_and_call_manager, messages, agent=agent, chain_id=self.chain_id)
         
-        # Clean up the response to ensure it's valid Mermaid code
-        # Remove any potential markdown backticks
-        mermaid_code = mermaid_code.replace("```mermaid", "").replace("```", "").strip()
+        # # Clean up the response to ensure it's valid Mermaid code
+        # # Remove any potential markdown backticks
+        # mermaid_code = mermaid_code.replace("```mermaid", "").replace("```", "").strip()
         
-        # Ensure the diagram starts with flowchart TD
-        if not mermaid_code.startswith("flowchart TD") and not mermaid_code.startswith("graph TD"):
-            mermaid_code = "flowchart TD\n" + mermaid_code
+        # # Ensure the diagram starts with flowchart TD
+        # if not mermaid_code.startswith("flowchart TD") and not mermaid_code.startswith("graph TD"):
+        #     mermaid_code = "flowchart TD\n" + mermaid_code
         
-        # Save the diagram to a file in the visualization directory
-        visualization_dir = os.getenv('VISUALIZATION_DIR', 'visualization')
-        os.makedirs(visualization_dir, exist_ok=True)
+        # # Save the diagram to a file in the visualization directory
+        # visualization_dir = os.getenv('VISUALIZATION_DIR', 'visualization')
+        # os.makedirs(visualization_dir, exist_ok=True)
         
-        diagram_filename = f"analysis_flow_{self.chain_id}.mmd"
-        diagram_path = os.path.join(visualization_dir, diagram_filename)
+        # diagram_filename = f"analysis_flow_{self.chain_id}.mmd"
+        # diagram_path = os.path.join(visualization_dir, diagram_filename)
         
-        with open(diagram_path, 'w', encoding='utf-8') as f:
-            f.write(mermaid_code)
+        # with open(diagram_path, 'w', encoding='utf-8') as f:
+        #     f.write(mermaid_code)
         
-        self.output_manager.display_system_messages(f"Mermaid diagram saved to {diagram_path}")
+        # self.output_manager.display_system_messages(f"Mermaid diagram saved to {diagram_path}")
         
-        return mermaid_code 
+        # return mermaid_code 
+        pass

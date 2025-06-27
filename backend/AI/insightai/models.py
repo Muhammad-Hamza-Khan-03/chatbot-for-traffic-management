@@ -8,19 +8,19 @@ import re
 def load_llm_config():
     
     default_llm_config = [
-    {"agent": "Expert Selector", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Analyst Selector", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Theorist", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "SQL Analyst", "details": {"model": "llama-3.1-8b-instant", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
-    {"agent": "SQL Generator", "details": {"model": "llama-3.1-8b-instant", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
-    {"agent": "SQL Executor", "details": {"model": "llama-3.1-8b-instant", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
-    {"agent": "Dataframe Inspector", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Planner", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Code Generator", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Code Debugger", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Error Corrector", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Code Ranker", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
-    {"agent": "Solution Summarizer", "details": {"model": "llama-3.1-8b-instant", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Expert Selector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Analyst Selector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Theorist", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "SQL Analyst", "details": {"model": "deepseek-r1-distill-llama-70b", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
+    {"agent": "SQL Generator", "details": {"model": "deepseek-r1-distill-llama-70b", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
+    {"agent": "SQL Executor", "details": {"model": "deepseek-r1-distill-llama-70b", "provider": "groq", "max_tokens": 2000, "temperature": 0}},
+    {"agent": "Dataframe Inspector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Planner", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Code Generator", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Code Debugger", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Error Corrector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Code Ranker", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
+    {"agent": "Solution Summarizer", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 4000, "temperature": 0}},
     ]
 
     # Try to get config from environment variable

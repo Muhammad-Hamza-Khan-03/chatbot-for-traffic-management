@@ -4,11 +4,6 @@ from insightai.insightai import InsightAI
 import os
 import json
 
-os.environ['GROQ_API_KEY'] = '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'
-os.environ['OPENAI_API_KEY']='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'
-
-os.environ['GEMINI_API_KEY'] = 'AIzaSyCCS0cWpjeZfO6F_whusOhG7_LHo8es7Xo'
-
 os.environ['LLM_CONFIG'] = '''[
     {"agent": "Expert Selector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 500, "temperature": 0}},
     {"agent": "Analyst Selector", "details": {"model": "deepseek-r1-distill-llama-70b", "provider":"groq","max_tokens": 500, "temperature": 0}},
@@ -21,7 +16,7 @@ os.environ['LLM_CONFIG'] = '''[
     {"agent": "Solution Summarizer", "details": {"model": "meta-llama/llama-4-scout-17b-16e-instruct", "provider":"groq","max_tokens": 2000, "temperature": 0}}
 ]'''
 
-file_name = 'Violation_Records.xlsx'
+file_name ='Violation_Records.xlsx' 
 
 if file_name.endswith('.csv'):
     df = pd.read_csv(file_name)
@@ -43,7 +38,7 @@ elif file_name.endswith('.xlsx'):
 insight = InsightAI(df=df, debug=True)
 
 # Single question
-insight.pd_agent_converse("What are the common violations and which cars are violating frequeuenctly,give a plot explaining vheicle type and violations?")
+insight.pd_agent_converse("Tell me about the car accidents with the help of visualization?")
 
 # Interactive mode
 # insight.pd_agent_converse()

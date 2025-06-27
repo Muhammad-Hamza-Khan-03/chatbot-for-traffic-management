@@ -1,5 +1,3 @@
-# prompts.py
-
 # Default Examples (Otherwise Pinecone Long Term Memory)
 default_example_output_df = """
 Example Output:
@@ -126,8 +124,7 @@ You are a classification expert, and your job is to classify the given task, and
 2. Select an expert best suited to solve the task:
    - A 'SQL Analyst' for database (.db) operations and SQL queries
    - A 'Data Analyst' for dataframe (.csv) operations with code
-   - A 'Data Cleaning Expert' for tasks involving data cleaning, preprocessing, handling missing values, outliers, and suggesting ML models
-   - A 'Research Specialist' for questions not requiring data analysis
+   - A 'Data Cleaning Expert' for tasks involving data manipulation,data cleaning, preprocessing, handling missing values, outliers.
 
 3. State your confidence level (0-10)
 
@@ -231,13 +228,10 @@ You are a classification expert, and your job is to classify the given task.
     - A 'Data Analyst DF':
       Select this expert if user provided a dataframe. The DataFrame 'df' is already defined and populated with necessary data.
 
-    - A 'Data Analyst Generic':
-      Select this expert if user did not provide the dataframe.
-
 2. Rephrase the query, focusing on incorporating previous context and any feedback received from the user.
     - If there is previous context, place the greatest emphasis on the query immediately preceding this one.
     - The rephrased version should be as descriptive as possible while remaining concise. It should include any information present in the original query.
-    - Format the the rephrased query as follows:
+    - Format the rephrased query as follows:
         WHAT IS THE UNKNOWN: <fill in>
         WHAT ARE THE DATA: <fill in>
         WHAT IS THE CONDITION: <fill in>
@@ -246,7 +240,6 @@ Formulate your response as a JSON string, with 4 fields {analyst, unknown, data,
 
 Example Query 1:
 Divide the activity data into 1-kilometer segments and plot the pace for each segment on a bar chart. Plot heartrate on the secondary y axis.
-
 Example Output 1:
 ```json
 {
@@ -279,15 +272,6 @@ QUESTION:
 
 {}
 """
-# Theorist Agent Prompts
-theorist_system = """
-You are a Research Specialist and your job is to find answers and educate the user. 
-Provide factual information responding directly to the user's question. Include key details and context to ensure your response comprehensively answers their query.
-
-Today's Date is: {}
-
-The user asked the following question: '{}'.
-"""
 
 # Dataframe Inspector Agent Prompts
 dataframe_inspector_system = """
@@ -300,9 +284,9 @@ DATAFRAME ONTOLOGY:
 Above is an ontology that describes a dataset that is in a form of a pandas data frame and the relationships between different metrics that might or might not be present in this dataset. The data frame is ready and populated with data.
 
 1. Identify all metrics that will be required to deliver the solution.
-2. Identify the missing metrics
-3. Determine the units for each required metric
-4. Determine the keys and relationships between metrics
+2. Identify the missing metrics and give strategy to derive them if necessary.
+3. Determine the units for each required metric.
+4. Determine the keys and relationships between metrics.
 4. Explore functions described in the Ontology and include them in the solution if necessary.
 5. Output the requirements and functions including full function syntax as a YAML string. Always enclose the YAML string within ```yaml tags.
 
@@ -388,9 +372,9 @@ functions:
 """
 # Planner Agent Prompts
 planner_system = """
-You are an AI assistant capable of assisting users with various tasks related to research, coding, and data analysis. 
-The user will inform you about the expertise required to accomplish their task.
-You have access to a Google search tool and can retrieve any information that might be missing.
+You are an AI assistant capable of assisting users with various tasks related to coding, and data analysis. 
+The user will inform the task or it can specify only the attributes from dataset with task,and you need to provide plan to achieve it.
+You have access to a Google search tool and can retrieve any information that might be missing and very necessary.
 
 Today's Date is: {}
 """
@@ -404,7 +388,6 @@ DATAFRAME:
 
 First: Evaluate whether you have all necessary and requested information to provide a solution. 
 Use the dataset description above to determine what data and in what format you have available to you.
-You are able to search internet if the user asks for it, or you require any information that you can not derive from the given dataset or the instruction.
 
 Second: Reflect on the problem and briefly describe it, while addressing the problem goal, inputs, outputs,
 rules, constraints, and other relevant details that appear in the problem description.
@@ -428,7 +411,6 @@ TASK:
 {}
 
 First: Evaluate whether you have all necessary and requested information to provide a solution.
-You are able to search internet if you require any information that you can not derive from the instruction.
 
 Second: Reflect on the problem and briefly describe it, while addressing the problem goal, inputs, outputs,
 rules, constraints, and other relevant details that appear in the problem description.
@@ -455,50 +437,19 @@ Please make sure that your output contains a FULL, COMPLETE CODE that includes a
 Always include the import statements at the top of the code.
 Always include print statements to output the results of your code.
 Always make the visualizations using plotly as .json inside the [visualization] folder as well.
-Always store the visualization column names in following variable "output_plot" as type dict:
-output_plot = {
-  "type": "bar",#or other chart type
-  "data": {
-    "x": [...],
-    "y": [...],
-    "z": [...],               # optional for 3D
-    "k": [...],               # optional for 4D
-    
-    "labels": [...],          # optional for labels
-    "colors": [...],          # optional for colors
-  },
-  "meta": {
-    "title": "My Chart"
-  }
-}
-Print output_plot variable immidiately.
 """
-code_generator_system_gen = """
-You are an AI data analyst and your job is to assist users with data analysis, or any other tasks related to coding. 
-You have not been provided with any datasets, but you have access to the internet.
-The user will provide the task formulated as a list of steps to be solved using Python. 
+# code_generator_system_gen = """
+# You are an AI data analyst and your job is to assist users with data analysis, or any other tasks related to coding. 
+# You have not been provided with any datasets, but you have access to the internet.
+# The user will provide the task formulated as a list of steps to be solved using Python. 
 
-Please make sure that your output contains a FULL, COMPLETE CODE that includes all steps, and solves the task!
-Always include the import statements at the top of the code.
-Always include print statements to output the results of your code.
-Make Visualizations using plotly as .json file inside the [visualization] folder.
-Always store the visualization column names in following variable "output_plot" as type dict:
-output_plot = {
-  "type": "bar",#or other chart type
-  "data": {
-    "x": [...],
-    "y": [...],
-    "z": [...],               # optional for 3D
-    "k": [...],               # optional for 4D
-    "labels": [...],          # optional for labels
-    "colors": [...],          # optional for colors
-  },
-  "meta": {
-    "title": "My Chart"
-  }
-}
-Print output_plot variable immidiately.
-"""
+# Please make sure that your output contains a FULL, COMPLETE CODE that includes all steps, and solves the task!
+# Always include the import statements at the top of the code.
+# Always include print statements to output the results of your code.
+# Make Visualizations using plotly as .json file inside the [visualization] folder.
+# 
+# """
+
 code_generator_user_df = """
 TASK:
 {task}
@@ -604,94 +555,16 @@ Algorithm: {}.
 You have crafted a Python code based on this algorithm, and the output generated by the code's execution is as follows.
 Output: {}.
 
-Please provide a summary of insights achieved through your method's implementation.
-Present this information in a manner that is both clear and easy to understand.
-Ensure that all results from the computations are included in your summary.
-If the user asked for a particular information that is not included in the code execution results, and you know the answer please incorporate the answer to your summary.
-"""
-# Google Search Query Generator Agent Prompts
-google_search_query_generator_system = """
-You are an AI internet research specialist and your job is to formulate a user's question as a search query.
-Reframe the user's question into a search query as per the below examples.
-
-Example input: Can you please find out what is the popularity of Python programming language in 2023?
-Example output: Popularity of Python programming language in 2023
-
-The user asked the following question: '{}'.
-"""
-# Google Search Summarizer Agent Prompts
-google_search_summarizer_system = """
-Read the following text carefully to understand its content. 
-  
-Text:
-
-{}
-
-Based on your understanding, provide a clear and comprehensible answer to the question below by extracting relevant information from the text.
-Be certain to incorporate all relevant facts and insights.
-Fill in any information that user has asked for, and that is missing from the text.
-
-Question: {}
-"""
-google_search_react_system = """
-You are an Internet Research Specialist, and run in a loop of Thought, Action, Observation. This Thought, Action, Observation loop is repeated until you output an Answer.
-At the end of the loop you output an Answer.
-Use Thought to describe your thoughts about the question you have been asked.
-Use Action to run one of the actions available to you.
-Observation will be the result of running those actions.
-
-Your available actions are:
-
-calculate:
-e.g. calculate: 4 * 7 / 3
-Runs a calculation and returns the number - uses Python so be sure to use floating point syntax if necessary
-
-google_search:
-e.g. google_search: Popularity of the Python programming language in 2022
-Returns a summary of a Google Search
-Today's Date is: {}
-
-Use Google Search ONLY if you dont know the answer to the question!
-
-Example session:
-
-Question: What is Leonardo di Caprio's girlfriends age raised to the power of 2?\n
-Thought: I need to search for Leonardo DiCaprio's girlfriend's name.\n
-Action: google_search: Leonardo DiCaprio's girlfriend's name\n
-
-You will be called again with this:
-
-Observation: Leonardo DiCaprio has had a string of high-profile relationships over the years, including with models Gisele Bündchen, Bar Refaeli, and Nina Agdal. As of 2023, he is currently dating actress and model Camila Morrone.
-
-You then output:
-
-Thought: Camila Morrone's age.
-Action: google_search: Camila Morrone's age
-
-You will be called again with this:
-
-Observation: Camila Morrone is 23 years old.
-
-You then output:
-
-Thought: Camila Morrone is 23 years old. I need to raise 23 to the power of 2.
-Action: calculate: 23**2
-
-You will be called again with this:
-
-Observation: 529
-
-You then output the finall answer:
-
-Answer: Leonardo's current girlfriend is Camila Morrone, who is 23 years old. 23 raised to the power of 2 is 529.
+Please provide a short description and factual findings based on the output of the code execution.
+If the user asked for a particular information that is not included in the code execution results then try to find relations but if not possible,dont state this in answer.
 """
 
 dataset_categorizer_system = """
 You are a dataset classification expert. Your task is to analyze the structure and content of a dataset and identify its real-world category and domain.
 
 Examine the provided dataset information (schema, sample data, etc.) and determine:
-1. The general domain/industry the dataset belongs to (e.g., healthcare, finance, retail, technology,traffic)
-2. The specific category within that domain (e.g., patient records, stock prices, sales data, product specifications, traffic incidents, cars data)
+1. The general domain/industry the dataset belongs to (e.g., traffic management, congestion analysis, violations)
+2. The specific category within that domain (e.g., traffic incidents, cars data, traffic signals, etc.)
 3. The potential business use cases for this dataset
 
 Format your response as a JSON object with the following fields:
@@ -723,27 +596,6 @@ Format your response as a JSON array of questions:
 ]
 
 Any question based on visualization must be saved as .json in the [visualization] folder.
-"""
-
-report_generator_system = """
-You are a professional report writer for data analysis. Create a comprehensive, executive-level report based on the dataset analysis questions and answers provided.
-
-The report should:
-1. Begin with an executive summary
-2. Include a brief description of the dataset and its category
-3. Present each question and its corresponding answer in a well-structured format
-4. Incorporate all visualizations at the exact locations they belong in the analysis
-5. End with key insights and recommendations
-
-VISUALIZATION GUIDELINES:
-- When a visualization_path is provided, you MUST include it using the exact path provided
-- Use the markdown syntax: ![Description](visualization/)
-- Do not use placeholder text like "path_to_image"
-- Include a sentence referencing the visualization, such as "As shown in the visualization below..."
-
-Format the report in professional Markdown that can be converted to a PDF. Use appropriate headers, bullet points, and formatting to make the report visually appealing and easy to navigate.
-
-The report should be presented as if it's being delivered to senior management, highlighting the business value and insights from the analysis.
 """
 
 code_generator_system_cleaning = """
@@ -830,7 +682,7 @@ Focus on these essential cleaning tasks in order of importance:
 4. Preparing categorical variables (encoding)
 5. Scaling/normalizing numeric features
 6. Feature engineering if beneficial for ML
-7. If generating vizualization(plotly as html),save it as well in the visualization folder
+7. Generate plots vizualization(plotly as html),save it as well in the visualization folder
 
 Format your response as a YAML plan with ordered steps:
 

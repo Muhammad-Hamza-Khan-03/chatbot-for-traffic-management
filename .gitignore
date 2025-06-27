@@ -1,2 +1,12 @@
 test.py
 /backend/AI/test.py
+*.xlsx
+*.csv
+*.json
+*.txt
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.gif
+*.toml
