@@ -1,0 +1,22 @@
+flowchart TD
+    A["Raw Data CSV"] --> B[Load Dataset]
+    B --> C[Check for Missing Values]
+    C --> D{{"Missing Values Present?"}}
+    D -->|Yes| E[Fill Missing Values with Median]
+    D -->|No| F[Ensure Correct Data Types]
+    E --> F
+    F --> G[Convert 'price' and 'avg_rating' to Float]
+    G --> H[Create Scatter Plot of Price vs Avg Rating]
+    H --> I(Compute Pearson Correlation Coefficient)
+    I --> J>Correlation Coefficient Calculated]
+    J --> K{{"Interpret Correlation?"}}
+    K -->|Strong Positive| L>Strong Positive Correlation Detected]
+    K -->|Moderate Positive| M>Moderate Positive Correlation Detected]
+    K -->|Weak Positive| N>Weak Positive Correlation Detected]
+    K -->|No Significant| O>No Significant Correlation Detected]
+    J --> P[Identify Outliers]
+    P --> Q{{"Outliers Present?"}}
+    Q -->|Yes| R[Remove or Cap Outliers]
+    Q -->|No| S[Document Findings]
+    R --> S
+    S --> T>Summary of Insights]
