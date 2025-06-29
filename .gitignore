@@ -11,3 +11,4 @@ test.py
 *.gif
 *.toml
 node_modules/
+frontend/*.json
