@@ -1,266 +1,198 @@
-'use client';
+'use client'
 
-import React, { useState, useRef } from 'react';
+import { useState, useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Upload, File, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
-// Define the props interface for the FileUploader component
-interface FileUploaderProps {
-  onUploadSuccess: () => void; // Callback function to notify parent when upload succeeds
+interface FileUploadProps {
+  onFileUploaded: () => void
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
-  // State management for the upload process
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [message, setMessage] = useState<string>('');
-  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
+interface UploadStatus {
+  status: 'idle' | 'uploading' | 'success' | 'error'
+  progress: number
+  message: string
+}
 
-  // useRef allows us to directly access the file input element
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handler for when user selects a file through the file input
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (file) {
-      // Validate file type by checking the file extension
-      const allowedTypes = ['.csv', '.xlsx', '.xls'];
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
-      if (allowedTypes.includes(fileExtension)) {
-        setSelectedFile(file);
-        setMessage('');
-        setMessageType('');
-        setUploadProgress(0);
-      } else {
-        // Red error message for invalid file types
-        setMessage('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
-        setMessageType('error');
-        setSelectedFile(null);
-        // Clear the input so user can select a different file
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }
-    }
-  };
+export default function FileUpload({ onFileUploaded }: FileUploadProps) {
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
+    status: 'idle',
+    progress: 0,
+    message: ''
+  })
 
   // Function to handle the actual file upload process
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setMessage('Please select a file first');
-      setMessageType('error');
-      return;
-    }
-
-    // Set upload state to show loading indicator
-    setIsUploading(true);
-    setUploadProgress(0);
-    setMessage('');
+  const uploadFile = async (file: File) => {
+    setUploadStatus({ status: 'uploading', progress: 0, message: 'Preparing upload...' })
 
     try {
-      // Create FormData object to package the file for upload
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      // Create FormData object to send the file to our FastAPI backend
+      const formData = new FormData()
+      formData.append('file', file)
 
-      // Simulate progress for better user experience
+      // Simulate progress updates during upload (in a real application, you might use XMLHttpRequest for actual progress tracking)
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 100);
+        setUploadStatus(prev => ({
+          ...prev,
+          progress: Math.min(prev.progress + 10, 90),
+          message: `Uploading ${file.name}...`
+        }))
+      }, 200)
 
-      // Make the API call to upload the file
+      // Send the file to our FastAPI backend endpoint
       const response = await fetch('http://localhost:8000/upload/', {
         method: 'POST',
         body: formData,
-      });
+      })
 
-      // Clear the progress simulation
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      clearInterval(progressInterval)
 
       if (response.ok) {
-        // Parse the successful response from the server
-        const result = await response.json();
-        setMessage(`✅ ${result.message}`);
-        setMessageType('success');
+        const result = await response.json()
+        setUploadStatus({
+          status: 'success',
+          progress: 100,
+          message: `Successfully uploaded ${file.name}. File contains ${result.rows || 'unknown'} rows and ${result.columns || 'unknown'} columns.`
+        })
         
-        // Reset the form state after successful upload
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+        // Notify parent component that upload is complete
+        onFileUploaded()
         
-        // Notify the parent component that upload was successful
-        onUploadSuccess();
+        // Reset status after 3 seconds
+        setTimeout(() => {
+          setUploadStatus({ status: 'idle', progress: 0, message: '' })
+        }, 3000)
       } else {
-        // Handle server errors with red error message
-        const errorData = await response.json();
-        setMessage(`❌ Upload failed: ${errorData.detail}`);
-        setMessageType('error');
+        const error = await response.json()
+        throw new Error(error.detail || 'Upload failed')
       }
     } catch (error) {
-      // Handle network errors with red error message
-      setMessage(`❌ Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setMessageType('error');
-    } finally {
-      // Always reset the uploading state
-      setIsUploading(false);
-      setTimeout(() => setUploadProgress(0), 1000);
+      setUploadStatus({
+        status: 'error',
+        progress: 0,
+        message: `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      })
+      
+      // Reset error status after 5 seconds
+      setTimeout(() => {
+        setUploadStatus({ status: 'idle', progress: 0, message: '' })
+      }, 5000)
     }
-  };
+  }
 
-  // Function to clear the selected file and reset the form
-  const handleClear = () => {
-    setSelectedFile(null);
-    setMessage('');
-    setMessageType('');
-    setUploadProgress(0);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  // Configure the dropzone with file validation and upload handling
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    // Handle rejected files (wrong type, too large, etc.)
+    if (rejectedFiles.length > 0) {
+      const rejection = rejectedFiles[0]
+      setUploadStatus({
+        status: 'error',
+        progress: 0,
+        message: `File rejected: ${rejection.errors[0]?.message || 'Invalid file'}`
+      })
+      return
     }
-  };
 
-  // Helper function to format file size in a human-readable format
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+    // Process the first accepted file (we only allow one file at a time for this demo)
+    if (acceptedFiles.length > 0) {
+      uploadFile(acceptedFiles[0])
+    }
+  }, [])
+
+  // Set up the dropzone configuration
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
+    },
+    maxSize: 50 * 1024 * 1024, // 50MB max file size
+    multiple: false // Only allow one file at a time
+  })
+
+  // Determine the appropriate styling based on current state
+  const getDropzoneClasses = () => {
+    const baseClasses = "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200"
+    
+    if (uploadStatus.status === 'uploading') {
+      return `${baseClasses} border-blue-300 bg-blue-50`
+    }
+    
+    if (uploadStatus.status === 'success') {
+      return `${baseClasses} border-green-300 bg-green-50`
+    }
+    
+    if (uploadStatus.status === 'error') {
+      return `${baseClasses} border-red-300 bg-red-50`
+    }
+    
+    if (isDragActive) {
+      return `${baseClasses} border-blue-400 bg-blue-50 scale-105`
+    }
+    
+    return `${baseClasses} border-gray-300 hover:border-blue-400 hover:bg-blue-50`
+  }
 
   return (
-    <div className="space-y-4">
-      {/* File input section with clean white background design */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors bg-white">
-        <div className="space-y-4">
-          {/* File input element - hidden but accessible */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="file-upload"
-          />
+    <Card>
+      <CardContent className="p-6">
+        {/* Main dropzone area */}
+        <div {...getRootProps()} className={getDropzoneClasses()}>
+          <input {...getInputProps()} />
           
-          {/* Visual file upload trigger */}
-          <label
-            htmlFor="file-upload"
-            className="cursor-pointer flex flex-col items-center space-y-2"
-          >
-            <svg
-              className="w-12 h-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <span className="text-sm text-black">
-              Click to select file or drag and drop
-            </span>
-            <span className="text-xs text-gray-500">
-              CSV, XLSX, XLS files only
-            </span>
-          </label>
-        </div>
-      </div>
-
-      {/* Display selected file information */}
-      {selectedFile && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <svg
-                className="w-8 h-8 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+          {/* Dynamic content based on upload status */}
+          {uploadStatus.status === 'uploading' ? (
+            <div className="space-y-4">
+              <Loader2 className="h-12 w-12 text-blue-600 mx-auto animate-spin" />
               <div>
-                <p className="font-medium text-black">{selectedFile.name}</p>
-                <p className="text-sm text-gray-600">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-lg font-medium text-gray-700">{uploadStatus.message}</p>
+                <Progress value={uploadStatus.progress} className="mt-2" />
               </div>
             </div>
-            <button
-              onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isUploading}
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
+          ) : uploadStatus.status === 'success' ? (
+            <div className="space-y-4">
+              <CheckCircle className="h-12 w-12 text-green-600 mx-auto" />
+              <p className="text-lg font-medium text-green-700">{uploadStatus.message}</p>
+            </div>
+          ) : uploadStatus.status === 'error' ? (
+            <div className="space-y-4">
+              <AlertCircle className="h-12 w-12 text-red-600 mx-auto" />
+              <p className="text-lg font-medium text-red-700">{uploadStatus.message}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+              <div>
+                <p className="text-lg font-medium text-gray-700">
+                  {isDragActive ? 'Drop your file here!' : 'Drag & drop your data file here'}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  or click to browse files
+                </p>
+              </div>
+              <Button variant="outline" className="mt-4">
+                <File className="mr-2 h-4 w-4" />
+                Choose File
+              </Button>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Upload progress bar with blue progress color */}
-      {isUploading && (
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-black">
-            <span>Uploading...</span>
-            <span>{uploadProgress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
-
-      {/* Action buttons with blue primary color */}
-      <div className="flex space-x-3">
-        <button
-          onClick={handleUpload}
-          disabled={!selectedFile || isUploading}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {isUploading ? 'Uploading...' : 'Upload File'}
-        </button>
-        
-        {selectedFile && (
-          <button
-            onClick={handleClear}
-            disabled={isUploading}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Clear
-          </button>
+        {/* Helpful information about supported file types */}
+        {uploadStatus.status === 'idle' && (
+          <Alert className="mt-4">
+            <AlertDescription>
+              Supported formats: CSV (.csv), Excel (.xlsx, .xls). Maximum file size: 50MB. 
+              Your data should have column headers in the first row for the best analysis results.
+            </AlertDescription>
+          </Alert>
         )}
-      </div>
-
-      {/* Status message display with proper color coding */}
-      {message && (
-        <div className={`p-3 rounded-lg text-sm ${
-          messageType === 'success' 
-            ? 'bg-green-50 text-green-800 border border-green-200' 
-            : 'bg-red-50 text-red-800 border border-red-200'
-        }`}>
-          {message}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default FileUploader;
+      </CardContent>
+    </Card>
+  )
+}
